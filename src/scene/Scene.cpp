@@ -126,26 +126,32 @@ void Scene::resetFrameBuffer(const int width, const int height) {
 
 	Log::Debug(std::format("pitch: {}", pitch));
 
+	// input
+	float initial = 0.f;
+	float final = 1.f;
+	int num_divisions_x = 3;
+
+	//vars
+	float differencial = (final - initial) / num_divisions_x;
+
 	// TODO: Set the proper frame buffer size
-	const int frameBufferSize = 1000 * 1000;
-	for (int i = 0; i < frameBufferSize; ++i) {
-		// TODO: Find the pixel coordinates for each index
-		const SDL_Point pixelCoords{
-			.x = 30,
-			.y = 30,
-		};
+	const int pixelsPerRow = pitch / sizeof(Uint32);
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			const int index = y * pixelsPerRow + x;
 
-		// TODO: Make a red gradient in the 'x' axis and a green gradient in the 'y' axis
-		ImColor color{
-			 255,
-			 255,
-			 0,
-			 255,
-		};
+			// Red increases from 0 to 255
+			ImColor color{
+				static_cast<int>((255.0f * x/num_divisions_x) / width),  // Red
+				0,                                       // Green
+				0,                                       // Blue
+				255                                      // Alpha
+			};
 
-		pixelData[i] = static_cast<ImU32>(color);
+			pixelData[index] = static_cast<ImU32>(color);
+		}
 	}
-
+		
 	SDL_UnlockTexture(_frameBuffer.get());
 }
 
