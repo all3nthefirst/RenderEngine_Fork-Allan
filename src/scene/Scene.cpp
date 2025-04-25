@@ -103,55 +103,56 @@ void Scene::renderImGui() {
 	}
 }
 
-// ReSharper disable once CppMemberFunctionMayBeStatic
 void Scene::onWindowShown(const int width, const int height) {
 	resetFrameBuffer(width, height);
 }
 
-// ReSharper disable once CppMemberFunctionMayBeStatic
 void Scene::onWindowResized(const int width, const int height) {
 	resetFrameBuffer(width, height);
 }
 
 void Scene::resetFrameBuffer(const int width, const int height) {
+	//This creates the texture for the FrameBuffer.
 	_frameBuffer = std::unique_ptr<SDL_Texture, TextureDestroyer>(
 		SDL_CreateTexture(Engine::Get().getRenderer().get(),
 			SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
 			width, height));
 
+	//What this does is access the pixel data, however needs to be locked.
 	void* pixels;
-	int pitch; // The number of bytes in a row of pixel data
+	int pitch;
 	SDL_LockTexture(_frameBuffer.get(), nullptr, &pixels, &pitch);
 	const auto pixelData = static_cast<Uint32*>(pixels);
 
 	Log::Debug(std::format("pitch: {}", pitch));
 
-	// input
-	float initial = 0.f;
-	float final = 1.f;
-	int num_divisions_x = 3;
+	const int pixelsPerRow = pitch / sizeof(Uint32); //"pixelsPerRow" calculates the number of pixels we have in a row, obviously.
+	const int numDivisions = 10; //"numDivisions" defines the number of vertical blocks, which is 10, so we don't really need to keep typing the number 10.
+	const int blockWidth = width / numDivisions; //This calculation is used to define the size of each vertical block, since the window's size can be changed without crashing. Devides the width of the screen with the number of divisions of the vertical blocks, aka 10.
 
-	//vars
-	float differencial = (final - initial) / num_divisions_x;
+	for (int i = 0; i < numDivisions; ++i) {
+		//This is used to calculate the color red based of the block index.
+		ImColor color{
+			static_cast<int>((255.0f * i) / (numDivisions - 1)),
+			0,
+			0,
+			255 //Defines the color red.
+		};
 
-	// TODO: Set the proper frame buffer size
-	const int pixelsPerRow = pitch / sizeof(Uint32);
-	for (int y = 0; y < height; ++y) {
-		for (int x = 0; x < width; ++x) {
-			const int index = y * pixelsPerRow + x;
+		//This defines the X of the coordinates for this one block.
+		int xStart = i * blockWidth;
+		int xEnd = (i == numDivisions - 1) ? width : xStart + blockWidth; //Last block fills the one that remains.
 
-			// Red increases from 0 to 255
-			ImColor color{
-				static_cast<int>((255.0f * x/num_divisions_x) / width),  // Red
-				0,                                       // Green
-				0,                                       // Blue
-				255                                      // Alpha
-			};
-
-			pixelData[index] = static_cast<ImU32>(color);
+		//This fills each block with the same color. The color depends on the block.
+		for (int y = 0; y < height; ++y) {
+			for (int x = xStart; x < xEnd; ++x) {
+				const int index = y * pixelsPerRow + x;
+				pixelData[index] = static_cast<ImU32>(color);
+			}
 		}
 	}
-		
+
+	//Unlocks the texture.
 	SDL_UnlockTexture(_frameBuffer.get());
 }
 
@@ -159,7 +160,6 @@ int Scene::consumeId() {
 	return _uniqueId++;
 }
 
-// ReSharper disable once CppMemberFunctionMayBeStatic
 void Scene::initializeFrameBuffer() {}
 
 void Scene::TextureDestroyer::operator()(SDL_Texture* texture) const {
