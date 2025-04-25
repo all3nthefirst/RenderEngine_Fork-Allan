@@ -126,14 +126,31 @@ void Scene::resetFrameBuffer(const int width, const int height) {
 
 	Log::Debug(std::format("pitch: {}", pitch));
 
-	const int pixelsPerRow = pitch / sizeof(Uint32); //"pixelsPerRow" calculates the number of pixels we have in a row, obviously.
-	const int numDivisions = 10; //"numDivisions" defines the number of vertical blocks, which is 10, so we don't really need to keep typing the number 10.
-	const int blockWidth = width / numDivisions; //This calculation is used to define the size of each vertical block, since the window's size can be changed without crashing. Devides the width of the screen with the number of divisions of the vertical blocks, aka 10.
+	// input
+	float initial = 1.f;
+	float final = 0.5f;
+	int num_divisions_x = 10; //"numDivisions" defines the number of vertical blocks, which is 10, so we don't really need to keep typing the number 10.
 
-	for (int i = 0; i < numDivisions; ++i) {
+	float differential = (final - initial) / num_divisions_x;
+
+
+	const int pixelsPerRow = pitch / sizeof(Uint32); //"pixelsPerRow" calculates the number of pixels we have in a row, obviously.
+	
+	//This calculation is used to define the size of each vertical block, 
+	// since the window's size can be changed without crashing.
+	// Devides the width of the screen with the number of divisions of the vertical blocks, aka 10.
+	const int blockWidth = width / num_divisions_x; 
+
+	for (int i = 0; i < num_divisions_x; ++i) {
 		//This is used to calculate the color red based of the block index.
+
+		//The percentage of the color is calculated by initial plus the differential, then its multiplied by "i" which is the number of divisions.
+		float colorPercentage = initial + differential * (float)i;
+		int red = (int)(255.f * colorPercentage);//This defines the color from the input, it is called "red", however it could be any color.
+
+		// static_cast<int>((255.0f * i) / (num_divisions_x - 1))
 		ImColor color{
-			static_cast<int>((255.0f * i) / (numDivisions - 1)),
+			red,
 			0,
 			0,
 			255 //Defines the color red.
@@ -141,7 +158,7 @@ void Scene::resetFrameBuffer(const int width, const int height) {
 
 		//This defines the X of the coordinates for this one block.
 		int xStart = i * blockWidth;
-		int xEnd = (i == numDivisions - 1) ? width : xStart + blockWidth; //Last block fills the one that remains.
+		int xEnd = (i == num_divisions_x - 1) ? width : xStart + blockWidth; //Last block fills the one that remains.
 
 		//This fills each block with the same color. The color depends on the block.
 		for (int y = 0; y < height; ++y) {
