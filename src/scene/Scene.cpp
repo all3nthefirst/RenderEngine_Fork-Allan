@@ -15,7 +15,7 @@ namespace Const
 Scene::Scene() {
 	_backgroundColor = ImColor(0.45f, 0.55f, 0.60f, 1.00f);
 
-	initializeFrameBuffer();
+	initializeFrameBuffer(); // This is used to start the FrameBuffer on the scene, obviously.
 }
 
 void Scene::addEntity(Entity entity) {
@@ -50,7 +50,7 @@ void Scene::render() const {
 	renderer.setColor(_backgroundColor);
 	SDL_RenderClear(renderer.get());
 
-	SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_BLEND); // This enables alpha, which is used for transparency.
 	for (const auto& entity : _entities) {
 		entity->render();
 	}
@@ -102,34 +102,31 @@ void Scene::renderImGui() {
 }
 
 void Scene::onWindowShown(const int width, const int height) {
-	resetFrameBuffer(width, height);
+	resetFrameBuffer(width, height); // This resets our FrameBuffer when the window is being displayed!!
 }
 
+// Also this resets the FrameBuffer when we resize the window so it doesnt crash no matter what size we do.
 void Scene::onWindowResized(const int width, const int height) {
 	resetFrameBuffer(width, height);
 }
 
 void Scene::resetFrameBuffer(const int width, const int height) {
-	_entities.clear();
-	_uniqueId = 0;
+	_entities.clear(); // This clears the entities everytime the FrameBuffer is being reset.
+	_uniqueId = 0; // And this is used to recount the ID after we resize the window. 
 
-	// TODO: Set the pixelSize value to be responsive to the screen properties: width and height
-	const int pixelSize = height / 16; //
-	const int pixelRowSum = pixelSize * 16; // pixelRowSum =? height
-	//const int diff = height - fbSize;
+	const int pixelSize = height / 16; // This is used to reload the size of every pixel no matter the size of the window.
+	const int pixelRowSum = pixelSize * 16; // This is load the size of our FrameBuffer by using pixels. 
 
-	// TODO: Place the FrameBuffer in the middle of the screen with the max possible size
 	SDL_Rect frameBufferRect{
-		.x = (width - pixelSize * 16) / 2,
-		.y = (height - pixelSize * 16) / 2,
-		.w = pixelSize * 16, // 540
+		.x = (width - pixelSize * 16) / 2, // This is to place the center of our FrameBuffer horizontally.
+		.y = (height - pixelSize * 16) / 2, // This is to place the center of our FrameBuffer vertically.
+		.w = pixelSize * 16,
 		.h = pixelSize * 16,
 	};
 
-	for (int i = 0; i < _frameBuffer.size(); ++i) {
-		const SDL_Point pixelCoords{ i % 16 , i / 16 };
+	for (int i = 0; i < _frameBuffer.size(); ++i) { 
+		const SDL_Point pixelCoords{ i % 16 , i / 16 }; // This calculates the pixel's grid coordinates which are X, and Y, obviously.
 
-		// TODO: Find each pixelPosition from pixel coordinates and framebuffer properties
 		const SDL_Point pixelPosition{
 			.x = frameBufferRect.x + pixelCoords.x * pixelSize,
 			.y = frameBufferRect.y + pixelCoords.y * pixelSize,
@@ -142,21 +139,20 @@ void Scene::resetFrameBuffer(const int width, const int height) {
 			.h = pixelSize,
 		};
 
-		addEntity(Entity(consumeId(), "Pixel", pixelRect, _frameBuffer.at(i)));
+		addEntity(Entity(consumeId(), "Pixel", pixelRect, _frameBuffer.at(i))); // This creates new pixels from the FrameBuffer.
 	}
 
-	// TODO: You can delete or comment this lines to hide the frameBuffer rectangle
 	Entity frameBufferEntity(consumeId(), "FrameBuffer", frameBufferRect, ImColor{ 255,255,255,255 });
 	frameBufferEntity.setFilled(false);
 	addEntity(std::move(frameBufferEntity));
 }
 
 void Scene::initializeFrameBuffer() {
-	ImColor Void = { 255,255,255,0 };
-	ImColor Black = { 0,0,0,255 };
-	ImColor White = { 255,255,255,255 };
-	ImColor Green = { 28,148,134,255 };
-	ImColor Red = { 206,52,52,255 };
+	ImColor Void = { 255,255,255,0 }; // Void means transparent since we have alpha.
+	ImColor Black = { 0,0,0,255 }; // This is the color black.
+	ImColor White = { 255,255,255,255 }; // This is the color white.
+	ImColor Green = { 28,148,134,255 }; // This is the color green.
+	ImColor Red = { 206,52,52,255 }; // This is the color red.
 
 	_frameBuffer = {
 		Void,Void,Void,Void,Void,Void,Void,Void,Void,Void,Void,Void,Void,Void,Void,Void,
